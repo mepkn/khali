@@ -35,12 +35,13 @@ wails3 dev          # app with hot reload
 | `wails3 dev` | Run the app with frontend hot reload |
 | `wails3 task package` | Build `bin/khali.app` (ad-hoc signed) |
 | `wails3 task run` | Build and run a dev `.app` |
+| `scripts/install.sh` | Build and install to `/Applications/Khali.app`, then relaunch |
 | `scripts/check.sh` | Generate bindings, Go vet + tests, frontend typecheck + lint + tests |
 | `npm --prefix frontend run check` | Frontend checks only |
 
 ## Deployment
 
-No server. `wails3 task package`, then copy `bin/khali.app` to `/Applications`. The build is ad-hoc signed, so the first launch may need right-click → Open.
+No server. `scripts/install.sh` builds the app and replaces `/Applications/Khali.app`. The build is ad-hoc signed, so the first launch may need right-click → Open.
 
 ## How it works
 
