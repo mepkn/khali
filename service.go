@@ -354,10 +354,34 @@ func (k *Khali) remove(j job, toTrash bool) (string, error) {
 	if err := k.checkPath(j.path); err != nil {
 		return "", err
 	}
+	mode, err := "delete", error(nil)
 	if toTrash {
-		return "trash", fsx.Trash(j.path)
+		mode, err = "trash", fsx.Trash(j.path)
+	} else {
+		err = fsx.Remove(j.path)
 	}
-	return "delete", fsx.Remove(j.path)
+	// macOS guards signed .app bundles (dotslash caches React Native
+	// DevTools.app, for one); only apps with App Management may delete them.
+	if err != nil && (errors.Is(err, os.ErrPermission) || errors.Is(err, syscall.EPERM)) && containsApp(j.path) {
+		err = errors.New("macOS protects the .app bundles in here. Allow Khali under System Settings → Privacy & Security → App Management, then try again")
+	}
+	return mode, err
+}
+
+// containsApp reports whether path is or holds an .app bundle.
+func containsApp(path string) bool {
+	if strings.HasSuffix(path, ".app") {
+		return true
+	}
+	found := false
+	_ = filepath.WalkDir(path, func(p string, d os.DirEntry, err error) error {
+		if err == nil && d.IsDir() && strings.HasSuffix(p, ".app") {
+			found = true
+			return filepath.SkipAll
+		}
+		return nil
+	})
+	return found
 }
 
 // checkPath is the last guard before a delete: an absolute path inside the
