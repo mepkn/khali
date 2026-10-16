@@ -8,7 +8,8 @@ macOS app that frees disk space taken by node_modules, build output, generated n
 - Cleans `node_modules`, `dist`, `.expo` and similar, whole Expo-generated `android/` / `ios/` folders, and `.apk` / `.aab` files
 - Only touches what git ignores and doesn't track; anything else is shown with a lock
 - Pin the project you're working on so it is never cleaned; "Select idle" picks everything in projects untouched for a few days
-- Shared caches: npm, Gradle, Android NDK / build tools / platforms, Xcode DerivedData, unavailable simulators, CocoaPods, Go, Homebrew, old Convex local backends
+- Shared caches: npm, Gradle, Android NDK / build tools / platforms, Xcode DerivedData, unavailable simulators, CocoaPods, Go, Homebrew, old Convex local backends, Playwright browsers
+- Docker (OrbStack or Docker Desktop): unused images, stopped containers, build cache and unused volumes, removed with `docker ... prune`; volumes are never picked by "Select unused"
 - Android NDK, build tools, platform and Gradle versions your projects still use are marked in use and can't be selected
 - Delete or move to the Trash, with a log of what went and how to get it back
 - Menu bar item with the free space; closing the window keeps it running
@@ -46,7 +47,7 @@ No server. `scripts/install.sh` builds the app and replaces `/Applications/Khali
 ## How it works
 
 - **Projects**: git repos, or folders with a `package.json` / `go.mod` / `app.json` outside one, up to four levels below each folder in Settings.
-- **Rules** (`internal/scan/rules.go`): `node_modules` and build folders next to a `package.json`; in an Expo app (`expo` dependency + `app.json`) the whole `android/` and `ios/` folders, since `expo prebuild` makes them; elsewhere only their build folders (`app/build`, `.gradle`, `.cxx`, `Pods` ...). Hidden folders such as `.convex` and plain `build/` are never matched.
+- **Rules** (`internal/scan/rules.go`): `node_modules` and build folders next to a `package.json`; in an Expo app (`expo` dependency + `app.json`) the whole `android/` and `ios/` folders, since `expo prebuild` makes them; elsewhere only their build folders (`app/build`, `.gradle`, `.cxx`, `Pods` ...). Next to a `go.mod`: `bin/`, and air's `tmp/` when there is an `.air.toml`; these need git to confirm they are ignored. Hidden folders such as `.convex` and plain `build/` are never matched.
 - **Safety**: in a git repo a target must pass `git check-ignore` and contain no files from `git ls-files`. If a whole `android/` fails, its build folders are offered instead. The service only deletes paths the last scan marked safe, in unpinned projects, inside the home folder, and never through a symlink.
 - **Active projects**: newest of the last commit, git's index and file edits (folder times are ignored so cleaning doesn't count as activity).
 - **Android versions** (`internal/scan/versions.go`): read from `node_modules/react-native/gradle/libs.versions.toml`, the gradle files and `gradle-wrapper.properties`. Versions seen are remembered per React Native minor version, so they are still known after `android/` and `node_modules` are cleaned. If any app's versions are unknown, unused versions are shown as "probably unused".

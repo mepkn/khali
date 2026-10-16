@@ -44,6 +44,9 @@ var iosBuildDirs = []string{"Pods", "build"}
 type candidate struct {
 	Target
 	fallback []candidate
+	// needsGit: only safe when git confirms it is ignored (a Go bin/ may
+	// hold hand-written scripts outside a repo).
+	needsGit bool
 }
 
 // dirInfo holds what the rules need to know about one folder.
@@ -117,6 +120,10 @@ func match(d dirInfo, e os.DirEntry) ([]candidate, bool) {
 			return nil, false
 		}
 		return []candidate{{Target: Target{Path: path, Kind: KindDeps, Label: "Dependencies", Regen: d.installCmd()}}}, false
+	case d.names["go.mod"] && name == "bin":
+		return []candidate{{Target: Target{Path: path, Kind: KindBuild, Label: "Go binaries", Regen: "go build"}, needsGit: true}}, false
+	case d.names["go.mod"] && name == "tmp" && (d.names[".air.toml"] || d.names["air.toml"]):
+		return []candidate{{Target: Target{Path: path, Kind: KindBuild, Label: "air build output", Regen: "recreated by air"}, needsGit: true}}, false
 	case d.hasPkg() && buildDirs[name] != "":
 		return []candidate{{Target: Target{Path: path, Kind: KindBuild, Label: buildDirs[name], Regen: regenFor(name)}}}, false
 	case name == "android" && isAndroidProject(path):

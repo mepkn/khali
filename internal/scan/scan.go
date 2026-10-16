@@ -242,6 +242,8 @@ func resolveSafety(root string, isGit bool, cands []candidate) []Target {
 		t := c.Target
 		t.Rel = relTo(root, t.Path)
 		switch {
+		case !isGit && c.needsGit:
+			t.Note = "not in a git repo, so it can't be confirmed as build output"
 		case !isGit:
 			t.Safe, t.Note = true, "not in a git repo"
 		case gitErr != "":

@@ -86,7 +86,7 @@ export function CachesView({ trash, projectsScanning, onClean, cleanProgress }: 
       <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
         <DatabaseIcon className="size-8 text-muted-foreground" />
         <div className="max-w-md text-sm text-muted-foreground">
-          npm, Gradle, Android SDK versions, Xcode, CocoaPods, Go and other shared caches. Versions your projects
+          npm, Gradle, Android SDK versions, Xcode, CocoaPods, Go, Docker and other shared caches. Versions your projects
           still need are marked in use and can't be selected.
         </div>
         <Button onClick={load} disabled={loading || projectsScanning}>

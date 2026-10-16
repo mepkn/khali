@@ -188,6 +188,7 @@ func List(home string, apps []scan.AndroidApp) []Item {
 	// Go and the rest
 	dir("Go", "Go build cache", "Library/Caches/go-build", Cache, "")
 	dir("Go", "Go module cache", "go/pkg/mod", Cache, "Modules are downloaded again on build")
+	docker(home, add)
 	dir("Other", "Homebrew downloads", "Library/Caches/Homebrew", Cache, "")
 	dir("Other", "dotslash cache", "Library/Caches/dotslash", Cache, "")
 

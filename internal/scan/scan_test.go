@@ -66,6 +66,12 @@ func fixture(t *testing.T) string {
 	git(t, bare, "init", "-q")
 	git(t, bare, "add", ".")
 	git(t, bare, "commit", "-qm", "init")
+	// A Go backend: bin/ ignored, air's tmp/ not.
+	write(t, bare, "server/go.mod", "module server\n")
+	write(t, bare, "server/.air.toml", "x")
+	write(t, bare, "server/bin/server", "x")
+	write(t, bare, "server/tmp/main", "x")
+	write(t, bare, ".gitignore", "node_modules/\nbuild/\n.gradle/\nbin/\n")
 	// Ignored files that are committed anyway stay protected.
 	write(t, bare, "android/.cxx/x", "x")
 	return root
@@ -109,6 +115,8 @@ func TestScan(t *testing.T) {
 		"android/app/build": true,
 		"android/.gradle":   true,
 		"android/.cxx":      false,
+		"server/bin":        true,
+		"server/tmp":        false, // not ignored
 	}
 	delete(want, "node_modules")
 	if !equal(got, want) {
@@ -147,9 +155,16 @@ func TestOutsideGit(t *testing.T) {
 	write(t, root, "site/package.json", `{}`)
 	write(t, root, "site/node_modules/a/index.js", "x")
 	write(t, root, "site/.convex/db", "x")
+	write(t, root, "tool/go.mod", "module tool\n")
+	write(t, root, "tool/bin/run.sh", "x")
 	res := Run(Options{Roots: []string{root}})
+	for _, p := range res.Projects {
+		if p.Name == "tool" && (len(p.Targets) != 1 || p.Targets[0].Safe) {
+			t.Errorf("go bin/ outside git must be locked: %+v", p.Targets)
+		}
+	}
 	var rels []string
-	for _, tg := range res.Projects[0].Targets {
+	for _, tg := range projectNamed(res, "site").Targets {
 		rels = append(rels, tg.Rel)
 		if !tg.Safe {
 			t.Errorf("%s should be cleanable outside git", tg.Rel)
@@ -171,4 +186,13 @@ func equal(a, b map[string]bool) bool {
 		}
 	}
 	return true
+}
+
+func projectNamed(res Result, name string) Project {
+	for _, p := range res.Projects {
+		if p.Name == name {
+			return p
+		}
+	}
+	return Project{}
 }
