@@ -13,6 +13,7 @@ macOS app that frees disk space taken by node_modules, build output, generated n
 - Android NDK, build tools, platform and Gradle versions your projects still use are marked in use and can't be selected
 - Delete or move to the Trash, with a log of what went and how to get it back
 - Menu bar item with the free space; closing the window keeps it running
+- Checks for updates on launch and from Khali → Check for Updates… in the menu bar; installs the latest GitHub release and restarts
 - Single user, local only: no account or sign-in
 
 ## Stack
@@ -53,4 +54,5 @@ No server. `scripts/install.sh` builds the app and replaces `/Applications/Khali
 - **Android versions** (`internal/scan/versions.go`): read from `node_modules/react-native/gradle/libs.versions.toml`, the gradle files and `gradle-wrapper.properties`. Versions seen are remembered per React Native minor version, so they are still known after `android/` and `node_modules` are cleaned. If any app's versions are unknown, unused versions are shown as "probably unused".
 - **Sizes** are allocated blocks, with hard links counted once.
 - **State** in `~/Library/Application Support/khali/`: `settings.json`, `versions.json` and `log.jsonl`.
+- **Updates** (`update.go`): release builds carry their short commit SHA (`-X main.commit`, set in `build/darwin/Taskfile.yml`). On launch and from Khali → Check for Updates…, the app compares it with the tag of the latest GitHub release; if they differ it downloads `khali-macos.zip` to a temp folder, quits, swaps the `.app` in place (putting the old one back if that fails), deletes the download and relaunches. The app's folder must be writable. Builds without a SHA (`wails3 dev`) skip the check.
 - **Code map**: `main.go` (window, menu bar), `service.go` (methods the frontend calls), `internal/scan`, `internal/caches`, `internal/fsx` (size, delete, trash), `internal/store`, `frontend/src` (UI; `frontend/bindings` is generated).
