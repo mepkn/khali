@@ -60,6 +60,33 @@ func main() {
 	// Clicking the Dock icon brings the hidden window back.
 	app.Event.OnApplicationEvent(events.Mac.ApplicationShouldHandleReopen, func(*application.ApplicationEvent) { show() })
 
+	// App menu (under "Khali" in the menu bar) with Check for Updates….
+	updates := &updater{app: app}
+	updates.cleanup()
+	appMenu := app.NewMenu()
+	appMenu.AddRole(application.About)
+	appMenu.Add("Check for Updates…").OnClick(func(*application.Context) { go updates.check(true) })
+	appMenu.AddSeparator()
+	appMenu.AddRole(application.ServicesMenu)
+	appMenu.AddSeparator()
+	appMenu.AddRole(application.Hide)
+	appMenu.AddRole(application.HideOthers)
+	appMenu.AddRole(application.UnHide)
+	appMenu.AddSeparator()
+	appMenu.AddRole(application.Quit)
+	menuBar := app.NewMenu()
+	menuBar.AddSubmenu("Khali").Append(appMenu)
+	menuBar.AddRole(application.EditMenu)
+	menuBar.AddRole(application.WindowMenu)
+	app.Menu.Set(menuBar)
+	// Quiet check on launch: only says something when there is an update.
+	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
+		go func() {
+			time.Sleep(3 * time.Second)
+			updates.check(false)
+		}()
+	})
+
 	tray := app.SystemTray.New()
 	menu := app.NewMenu()
 	freeItem := menu.Add("").SetEnabled(false)
